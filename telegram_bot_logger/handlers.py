@@ -42,7 +42,6 @@ class TelegramMessageHandler(QueueHandler):
         api_server: Optional[_api_server.TelegramAPIServer]=_api_server.PRODUCTION_SERVER,
         format_type: Optional[Union[formatters.FormatType, str]]=formatters.FormatType.TEXT,
         document_name_strategy: Optional[Union[formatters.DocumentNameStrategy, str]]=formatters.DocumentNameStrategy.TIMESTAMP,
-        proxies: Optional[PROXIES_T]=None,
         formatter: Optional[formatters.TelegramBaseFormatter]=formatters.TelegramHTMLTextFormatter(),
         additional_body: Optional[ADDITIONAL_BODY_T]=None,
         level: Optional[str]=None
@@ -103,7 +102,6 @@ class TelegramMessageHandler(QueueHandler):
             api_server = api_server,
             format_type = format_type,
             document_name_strategy = document_name_strategy,
-            proxies = proxies,
             additional_body = additional_body
         )
 
@@ -130,7 +128,7 @@ class TelegramMessageHandler(QueueHandler):
         return record
 
     def close(self) -> None:
-        if self.listener is not None:
+        if getattr(self, "listener", None) is not None:
             # Avoid double shutdown
             self.listener.stop()
             self.listener = None
@@ -145,7 +143,6 @@ class InnerTelegramMessageHandler(logging.Handler):
         api_server: _api_server.TelegramAPIServer,
         format_type: formatters.FormatType,
         document_name_strategy: formatters.DocumentNameStrategy,
-        proxies: Optional[PROXIES_T]=None,
         additional_body: Optional[ADDITIONAL_BODY_T]=None,
         retries=3,  # How many times attempt,
         timeout=10.0,  # Read timeout seconds when Telegram API is overloaded
@@ -161,7 +158,6 @@ class InnerTelegramMessageHandler(logging.Handler):
         transport = HTTPTransport(retries=retries)
 
         self.http_client: _HTTPClient = _HTTPClient(
-            proxies = proxies,
             transport=transport,
             timeout=timeout,
         )
